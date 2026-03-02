@@ -5,6 +5,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -42,40 +43,44 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center">
-            <div className="flex flex-col gap-4 w-full max-w-sm p-8 border rounded-xl">
-                <h1 className="text-2xl font-bold">Create Account</h1>
+        <main className="min-h-screen bg-zinc-50 text-zinc-900">
+            <section className="flex min-h-[calc(100vh-73px)] items-center justify-center px-6">
+                <div className="flex w-full max-w-sm flex-col gap-4 rounded-xl border bg-white p-8">
+                    <h1 className="text-2xl font-bold">Create Account</h1>
 
-                <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="border p-2 rounded"
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="border p-2 rounded"
-                />
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="rounded border p-2"
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="rounded border p-2"
+                    />
 
-                {error && <p className="text-red-500 text-sm">{error}</p>}
+                    {error && <p className="text-sm text-red-500">{error}</p>}
 
-                <button
-                    onClick={handleRegister}
-                    disabled={loading}
-                    className="bg-black text-white p-2 rounded hover:bg-gray-800 disabled:opacity-50"
-                >
-                    {loading ? "Creating account..." : "Register"}
-                </button>
+                    <button
+                        onClick={handleRegister}
+                        disabled={loading}
+                        className="rounded bg-black p-2 text-white hover:bg-gray-800 disabled:opacity-50"
+                    >
+                        {loading ? "Creating account..." : "Register"}
+                    </button>
 
-                <p className="text-sm text-center">
-                    Already have an account?{" "}
-                    <a href="/login" className="underline">Log in</a>
-                </p>
-            </div>
-        </div>
+                    <p className="text-center text-sm">
+                        Already have an account?{" "}
+                        <Link href="/login" className="underline">
+                            Log in
+                        </Link>
+                    </p>
+                </div>
+            </section>
+        </main>
     );
 }
