@@ -16,7 +16,8 @@ import {
     reauthenticateWithCredential,
     EmailAuthProvider,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 
 export default function DashboardScreen() {
     const router = useRouter();
@@ -27,13 +28,17 @@ export default function DashboardScreen() {
     const [passwordMsg, setPasswordMsg] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [changingPassword, setChangingPassword] = useState(false);
+    const [whitelisted, setWhitelisted] = useState<boolean | null>(null);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 router.replace("/login");
             } else {
                 setEmail(user.email ?? "");
+                const q = query(collection(db, "whitelist"), where("email", "==", user.email));
+                const snapshot = await getDocs(q);
+                setWhitelisted(!snapshot.empty);
             }
         });
         return () => unsubscribe();
@@ -93,7 +98,7 @@ export default function DashboardScreen() {
 
     return (
         <View style={styles.screen}>
-            {/* Header */}
+
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Dashboard</Text>
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -102,15 +107,34 @@ export default function DashboardScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                {/* Account card */}
+                {/* acc section*/}
                 <View style={styles.card}>
                     <Text style={styles.sectionLabel}>ACCOUNT</Text>
                     <Text style={styles.emailText}>
                         Logged in as <Text style={styles.emailBold}>{email}</Text>
                     </Text>
+                    <View style={styles.statusRow}>
+                        <View
+                            style={[
+                                styles.statusDot,
+                                whitelisted === null
+                                    ? styles.dotNeutral
+                                    : whitelisted
+                                        ? styles.dotGreen
+                                        : styles.dotRed,
+                            ]}
+                        />
+                        <Text style={styles.statusText}>
+                            {whitelisted === null
+                                ? "Checking whitelist…"
+                                : whitelisted
+                                    ? "Desktop access granted"
+                                    : "No desktop access"}
+                        </Text>
+                    </View>
                 </View>
 
-                {/* Change password card */}
+                {/* pass change */}
                 <View style={styles.card}>
                     <Text style={styles.sectionLabel}>CHANGE PASSWORD</Text>
 
@@ -222,6 +246,40 @@ const styles = StyleSheet.create({
     },
     emailBold: {
         fontWeight: "700",
+    },
+    statusRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginTop: 2,
+    },
+    statusDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+    },
+    dotNeutral: {
+        backgroundColor: "#d4d4d8",
+    },
+    dotGreen: {
+        backgroundColor: "#22c55e",
+        shadowColor: "#22c55e",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.6,
+        shadowRadius: 4,
+        elevation: 4,
+    },
+    dotRed: {
+        backgroundColor: "#ef4444",
+        shadowColor: "#ef4444",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.6,
+        shadowRadius: 4,
+        elevation: 4,
+    },
+    statusText: {
+        fontSize: 13,
+        color: "#71717a",
     },
     input: {
         borderWidth: 1,
