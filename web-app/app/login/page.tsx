@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -18,6 +19,17 @@ export default function LoginPage() {
         setLoading(true);
         try {
             await signInWithEmailAndPassword(auth, email, password);
+            // whitelist check
+            const q = query(collection(db, "whitelist"), where("email", "==", email));
+            const snapshot = await getDocs(q);
+
+            if (snapshot.empty) {
+                await signOut(auth);
+                setError("Your account is not authorized to access the desktop application.");
+                setLoading(false);
+                return;
+            }
+
             router.push("/dashboard");
         } catch (err: any) {
             setError("Invalid email or password.");
