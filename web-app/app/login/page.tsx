@@ -19,11 +19,13 @@ export default function LoginPage() {
         setLoading(true);
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            // whitelist check
-            const q = query(collection(db, "whitelist"), where("email", "==", email));
-            const snapshot = await getDocs(q);
 
-            if (snapshot.empty) {
+            // allow if whitelisted or admin
+            const whitelistQ = query(collection(db, "whitelist"), where("email", "==", email));
+            const adminQ = query(collection(db, "admins"), where("email", "==", email));
+            const [whitelistSnap, adminSnap] = await Promise.all([getDocs(whitelistQ), getDocs(adminQ)]);
+
+            if (whitelistSnap.empty && adminSnap.empty) {
                 await signOut(auth);
                 setError("Your account is not authorized to access the desktop application.");
                 setLoading(false);

@@ -29,6 +29,7 @@ export default function DashboardScreen() {
     const [passwordError, setPasswordError] = useState("");
     const [changingPassword, setChangingPassword] = useState(false);
     const [whitelisted, setWhitelisted] = useState<boolean | null>(null);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -39,6 +40,10 @@ export default function DashboardScreen() {
                 const q = query(collection(db, "whitelist"), where("email", "==", user.email));
                 const snapshot = await getDocs(q);
                 setWhitelisted(!snapshot.empty);
+
+                const adminQ = query(collection(db, "admins"), where("email", "==", user.email));
+                const adminSnap = await getDocs(adminQ);
+                setIsAdmin(!adminSnap.empty);
             }
         });
         return () => unsubscribe();
@@ -119,17 +124,21 @@ export default function DashboardScreen() {
                                 styles.statusDot,
                                 whitelisted === null
                                     ? styles.dotNeutral
-                                    : whitelisted
-                                        ? styles.dotGreen
-                                        : styles.dotRed,
+                                    : isAdmin
+                                        ? styles.dotBlue
+                                        : whitelisted
+                                            ? styles.dotGreen
+                                            : styles.dotRed,
                             ]}
                         />
                         <Text style={styles.statusText}>
                             {whitelisted === null
-                                ? "Checking whitelist…"
-                                : whitelisted
-                                    ? "Desktop access granted"
-                                    : "No desktop access"}
+                                ? "Checking whitelist\u2026"
+                                : isAdmin
+                                    ? "Admin user"
+                                    : whitelisted
+                                        ? "Desktop access granted"
+                                        : "No desktop access"}
                         </Text>
                     </View>
                 </View>
@@ -264,6 +273,14 @@ const styles = StyleSheet.create({
     dotGreen: {
         backgroundColor: "#22c55e",
         shadowColor: "#22c55e",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.6,
+        shadowRadius: 4,
+        elevation: 4,
+    },
+    dotBlue: {
+        backgroundColor: "#3b82f6",
+        shadowColor: "#3b82f6",
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.6,
         shadowRadius: 4,

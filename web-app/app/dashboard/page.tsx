@@ -22,6 +22,7 @@ export default function DashboardPage() {
     const [passwordError, setPasswordError] = useState("");
     const [changingPassword, setChangingPassword] = useState(false);
     const [whitelisted, setWhitelisted] = useState<boolean | null>(null);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -32,6 +33,10 @@ export default function DashboardPage() {
                 const q = query(collection(db, "whitelist"), where("email", "==", user.email));
                 const snapshot = await getDocs(q);
                 setWhitelisted(!snapshot.empty);
+
+                const adminQ = query(collection(db, "admins"), where("email", "==", user.email));
+                const adminSnap = await getDocs(adminQ);
+                setIsAdmin(!adminSnap.empty);
             }
         });
         return () => unsubscribe();
@@ -88,7 +93,17 @@ export default function DashboardPage() {
             {/* top */}
             <header className="border-b bg-white">
                 <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-                    <h1 className="text-lg font-semibold">Dashboard</h1>
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-lg font-semibold">Dashboard</h1>
+                        {isAdmin && (
+                            <button
+                                onClick={() => router.push("/admin")}
+                                className="text-sm text-zinc-500 hover:text-zinc-700 transition-colors"
+                            >
+                                Manage Whitelist →
+                            </button>
+                        )}
+                    </div>
                     <button
                         onClick={handleLogout}
                         className="rounded bg-zinc-900 px-4 py-1.5 text-sm text-white hover:bg-zinc-700 transition-colors"
@@ -110,7 +125,9 @@ export default function DashboardPage() {
                     <div className="mt-3 flex items-center gap-2">
                         <span
                             className={`inline-block h-2.5 w-2.5 rounded-full ${whitelisted === null
-                                    ? "bg-zinc-300"
+                                ? "bg-zinc-300"
+                                : isAdmin
+                                    ? "bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.6)]"
                                     : whitelisted
                                         ? "bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]"
                                         : "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]"
@@ -118,10 +135,12 @@ export default function DashboardPage() {
                         />
                         <span className="text-sm text-zinc-500">
                             {whitelisted === null
-                                ? "Checking whitelist…"
-                                : whitelisted
-                                    ? "Desktop access granted"
-                                    : "No desktop access"}
+                                ? "Checking whitelist\u2026"
+                                : isAdmin
+                                    ? "Admin user"
+                                    : whitelisted
+                                        ? "Desktop access granted"
+                                        : "No desktop access"}
                         </span>
                     </div>
                 </section>
