@@ -63,6 +63,10 @@ export default function LoginPage() {
                             Register
                         </Link>
                     </p>
+
+                    <Link href="/" className="text-center text-sm text-zinc-500 hover:text-zinc-700">
+                        ← Back to home
+                    </Link>
                 </div>
             </section>
         </main>
