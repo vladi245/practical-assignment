@@ -8,7 +8,8 @@ import {
     reauthenticateWithCredential,
     EmailAuthProvider,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
@@ -20,13 +21,17 @@ export default function DashboardPage() {
     const [passwordMsg, setPasswordMsg] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [changingPassword, setChangingPassword] = useState(false);
+    const [whitelisted, setWhitelisted] = useState<boolean | null>(null);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 router.push("/login");
             } else {
                 setEmail(user.email ?? "");
+                const q = query(collection(db, "whitelist"), where("email", "==", user.email));
+                const snapshot = await getDocs(q);
+                setWhitelisted(!snapshot.empty);
             }
         });
         return () => unsubscribe();
@@ -102,6 +107,23 @@ export default function DashboardPage() {
                     <p className="mt-2 text-lg">
                         Logged in as <strong>{email}</strong>
                     </p>
+                    <div className="mt-3 flex items-center gap-2">
+                        <span
+                            className={`inline-block h-2.5 w-2.5 rounded-full ${whitelisted === null
+                                    ? "bg-zinc-300"
+                                    : whitelisted
+                                        ? "bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]"
+                                        : "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]"
+                                }`}
+                        />
+                        <span className="text-sm text-zinc-500">
+                            {whitelisted === null
+                                ? "Checking whitelist…"
+                                : whitelisted
+                                    ? "Desktop access granted"
+                                    : "No desktop access"}
+                        </span>
+                    </div>
                 </section>
 
                 {/* change password section */}
