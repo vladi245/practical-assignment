@@ -19,14 +19,11 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
-            const q = query(collection(db, "whitelist"), where("email", "==", email));
-            const snapshot = await getDocs(q);
+            const whitelistQ = query(collection(db, "whitelist"), where("email", "==", email));
+            const adminQ = query(collection(db, "admins"), where("email", "==", email));
+            const [whitelistSnap, adminSnap] = await Promise.all([getDocs(whitelistQ), getDocs(adminQ)]);
 
-            console.log("Snapshot empty:", snapshot.empty);
-            console.log("Snapshot size:", snapshot.size);
-            snapshot.forEach(doc => console.log("Doc found:", doc.data()));
-
-            if (snapshot.empty) {
+            if (whitelistSnap.empty && adminSnap.empty) {
                 setError("This email is not authorized to access this platform.");
                 setLoading(false);
                 return;
